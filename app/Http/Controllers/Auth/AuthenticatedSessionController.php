@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -17,6 +19,54 @@ class AuthenticatedSessionController extends Controller
     public function create(): View
     {
         return view('auth.login');
+    }
+
+    /**
+     * Display the login view.
+     */
+    public function redirectToProvider($provider)
+    {
+        try{
+            return Socialite::driver($provider)
+                ->scopes(['read:user'])
+                ->redirectUrl(route('provider.callback', 'provider='.$provider))
+                ->redirect();
+        }catch (\Exception $exception){
+
+        }
+    }
+
+    public function providerCallback(Request $request)
+    {
+
+//        try{
+        $provider = $request->provider;
+
+        $providerUser = Socialite::driver($provider)->user();
+
+        $user = User::where('provider', $provider)->where('provider_id', $providerUser->id)->first();
+        if ($user){
+            $user->provider_token = $providerUser->token;
+            $user->provider_refresh_token = $providerUser->refreshToken;
+            $user->save();
+        }else{
+            $user = User::create([
+                'name' => $providerUser->name,
+                'email' => $providerUser->email,
+                'provider' => $provider,
+                'provider_id' => $providerUser->id,
+                'provider_token' => $providerUser->token,
+                'provider_refresh_token' => $providerUser->refreshToken,
+            ]);
+        }
+        Auth::login($user);
+
+        return redirect('/dashboard');
+//        }catch (\Exception $exception){
+//            // set message
+//
+//            return redirect('/login');
+//        }
     }
 
     /**
