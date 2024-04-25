@@ -11,9 +11,9 @@
             <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
                 <div class="relative overflow-x-auto">
                     <div>
-                        <label for="email" class="block text-sm font-medium leading-6 text-gray-200">Choose file to upload</label>
+                        <label for="email" class="block text-sm font-medium leading-6 text-white">Choose file to upload</label>
                         <div class="mt-2">
-                            <input @change="handleFileUpload($event)" type="file" class="text-white">
+                            <input @change="handleFileUpload($event)" type="file" class="text-white" accept=".txt, .json">
                             <span v-if="submitting" class="text-white">
                                     <i  class="fa fa-spinner fa-spin mr-1"></i> Uploading file....
                                 </span>
@@ -32,7 +32,7 @@
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
                                 <th scope="col" class="px-6 py-3">
-                                    #ID
+                                    #SN
                                 </th>
                                 <th scope="col" class="px-6 py-3">
                                     Name
@@ -51,7 +51,7 @@
                             <tbody>
                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700" v-for="(value, index) in people" :key="index">
                                 <td class="px-6 py-4">
-                                    @{{value.name}}
+                                    @{{index+1}}
                                 </td>
                                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     @{{value.name}}
