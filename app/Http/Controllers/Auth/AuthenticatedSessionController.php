@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -27,46 +28,56 @@ class AuthenticatedSessionController extends Controller
     public function redirectToProvider($provider)
     {
         try{
+            /*
+             * Redirect user to provider auth screen
+             */
             return Socialite::driver($provider)
                 ->scopes(['read:user'])
                 ->redirectUrl(route('provider.callback', 'provider='.$provider))
                 ->redirect();
-        }catch (\Exception $exception){
 
+        }catch (\Exception $exception){
+            Session::flash('error-message', 'Something went wrong. Please try another method.');
+            return redirect('/login');
         }
     }
 
     public function providerCallback(Request $request)
     {
+        try{
+            $provider = $request->provider;
 
-//        try{
-        $provider = $request->provider;
+            $providerUser = Socialite::driver($provider)->user();
 
-        $providerUser = Socialite::driver($provider)->user();
+            /*
+             * Get User
+             */
+            $user = User::where('provider', $provider)->where('provider_id', $providerUser->id)->first();
+            if ($user){
+                $user->provider_token = $providerUser->token;
+                $user->provider_refresh_token = $providerUser->refreshToken;
+                $user->save();
+            }else{
+                $user = User::create([
+                    'name' => $providerUser->name,
+                    'email' => $providerUser->email,
+                    'provider' => $provider,
+                    'provider_id' => $providerUser->id,
+                    'provider_token' => $providerUser->token,
+                    'provider_refresh_token' => $providerUser->refreshToken,
+                ]);
+            }
 
-        $user = User::where('provider', $provider)->where('provider_id', $providerUser->id)->first();
-        if ($user){
-            $user->provider_token = $providerUser->token;
-            $user->provider_refresh_token = $providerUser->refreshToken;
-            $user->save();
-        }else{
-            $user = User::create([
-                'name' => $providerUser->name,
-                'email' => $providerUser->email,
-                'provider' => $provider,
-                'provider_id' => $providerUser->id,
-                'provider_token' => $providerUser->token,
-                'provider_refresh_token' => $providerUser->refreshToken,
-            ]);
+            /*
+             * Authenticate user and redirect to dashboard
+             */
+            Auth::login($user);
+            return redirect('/dashboard');
+            
+        }catch (\Exception $exception){
+            Session::flash('error-message', 'Error while authenticating this user.');
+            return redirect('/login');
         }
-        Auth::login($user);
-
-        return redirect('/dashboard');
-//        }catch (\Exception $exception){
-//            // set message
-//
-//            return redirect('/login');
-//        }
     }
 
     /**

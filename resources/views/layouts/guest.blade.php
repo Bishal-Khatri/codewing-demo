@@ -23,6 +23,9 @@
             </div>
 
             <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
+                @if(Session::has('error-message'))
+                    <p class="alert {{ Session::get('alert-class', 'alert-info') }}">{{ Session::get('error-message') }}</p>
+                @endif
                 {{ $slot }}
             </div>
         </div>
