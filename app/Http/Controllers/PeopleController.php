@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\PeopleExport;
+use App\Jobs\PeopleExportJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -44,12 +45,12 @@ class PeopleController extends Controller
         /*
          * Download
          */
-        return (new PeopleExport($path))->download('people'.time().'.xlsx');
+//        return (new PeopleExport($path))->download('people'.time().'.xlsx');
 
         /*
          * Queue
          */
-//        (new PeopleExport($path))->queue('people'.time().'.xlsx');
-//        return back()->withSuccess('Export started!');
+        PeopleExportJob::dispatch($path);
+        return back()->withSuccess('Export started!');
     }
 }
